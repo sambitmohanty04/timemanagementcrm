@@ -10,7 +10,7 @@ export const NAV_ITEMS: NavItem[] = [
     id: "dashboard",
     label: "Dashboard",
     icon: LayoutDashboard,
-    path: "/dashboard",
+    path: "/",
   },
   {
     id: "tasks",

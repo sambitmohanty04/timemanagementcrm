@@ -1,6 +1,10 @@
 import type { Dispatch, SetStateAction } from "react";
+import { useNavigate } from "react-router-dom";
 import {
-  ChevronDown, ChevronLeft, ChevronRight, Sparkles,
+  ChevronDown,
+  ChevronLeft,
+  ChevronRight,
+  Sparkles,
 } from "lucide-react";
 
 import { NAV_ITEMS } from "../../data/navigation";
@@ -8,10 +12,13 @@ import { NAV_ITEMS } from "../../data/navigation";
 interface SidebarProps {
   collapsed: boolean;
   setCollapsed: Dispatch<SetStateAction<boolean>>;
+
   activeTab: string;
   activeTaskFilter: string;
+
   setActiveTab: Dispatch<SetStateAction<string>>;
   setActiveTaskFilter: Dispatch<SetStateAction<string>>;
+
   tasksExpanded: boolean;
   setTasksExpanded: Dispatch<SetStateAction<boolean>>;
 }
@@ -26,14 +33,22 @@ export default function Sidebar({
   tasksExpanded,
   setTasksExpanded,
 }: SidebarProps) {
+  const navigate = useNavigate();
+
+  // Handle main navigation
   const handleNavClick = (
     itemId: string,
+    path?: string,
     subFilter?: string
   ) => {
     setActiveTab(itemId);
 
     if (subFilter) {
       setActiveTaskFilter(subFilter);
+    }
+
+    if (path) {
+      navigate(path);
     }
   };
 
@@ -44,7 +59,9 @@ export default function Sidebar({
       relative z-30 select-none
       ${collapsed ? "w-[78px]" : "w-[260px]"}`}
     >
-      {/* Header */}
+      {/* =========================================================
+          HEADER
+      ========================================================= */}
 
       <div className="h-16 border-b border-slate-800/80 flex items-center justify-between px-4">
         <div
@@ -52,12 +69,14 @@ export default function Sidebar({
             collapsed ? "justify-center w-full" : ""
           }`}
         >
+          {/* Logo */}
           <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 via-indigo-500 to-cyan-400 p-[1px] shrink-0">
             <div className="w-full h-full bg-[#0F1523] rounded-[11px] flex items-center justify-center">
               <Sparkles className="w-5 h-5 text-indigo-400" />
             </div>
           </div>
 
+          {/* Logo Text */}
           {!collapsed && (
             <div className="flex flex-col">
               <span className="font-bold text-base text-white">
@@ -74,11 +93,12 @@ export default function Sidebar({
           )}
         </div>
 
+        {/* Collapse Button */}
         {!collapsed && (
           <button
             type="button"
             onClick={() => setCollapsed(true)}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800/60"
+            className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800/60 transition"
             title="Collapse Sidebar"
           >
             <ChevronLeft className="w-4 h-4" />
@@ -86,7 +106,9 @@ export default function Sidebar({
         )}
       </div>
 
-      {/* Expand */}
+      {/* =========================================================
+          EXPAND BUTTON
+      ========================================================= */}
 
       {collapsed && (
         <button
@@ -99,34 +121,63 @@ export default function Sidebar({
         </button>
       )}
 
-      {/* Navigation */}
+      {/* =========================================================
+          NAVIGATION
+      ========================================================= */}
 
       <div className="flex-1 overflow-y-auto py-4 px-3 space-y-1.5">
         {NAV_ITEMS.map((item) => {
           const Icon = item.icon;
+
           const isActive = activeTab === item.id;
-          const hasSubItems =
-            Boolean(item.subItems?.length);
+
+          const hasSubItems = Boolean(
+            item.subItems && item.subItems.length > 0
+          );
 
           return (
-            <div key={item.id} className="space-y-1">
+            <div
+              key={item.id}
+              className="space-y-1"
+            >
+              {/* =================================================
+                  MAIN MENU ITEM
+              ================================================= */}
+
               <button
                 type="button"
                 onClick={() => {
+                  // My Tasks has submenu
                   if (hasSubItems && !collapsed) {
                     setTasksExpanded((prev) => !prev);
-                    handleNavClick(item.id, "today");
-                  } else {
-                    handleNavClick(item.id);
+
+                    handleNavClick(
+                      item.id,
+                      item.path,
+                      "today"
+                    );
+
+                    return;
                   }
+
+                  // Normal menu item
+                  handleNavClick(
+                    item.id,
+                    item.path
+                  );
                 }}
                 className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 group relative ${
                   isActive
                     ? "bg-gradient-to-r from-indigo-600/90 to-indigo-700/80 text-white shadow-lg shadow-indigo-600/20"
                     : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/50"
-                } ${collapsed ? "justify-center px-0" : ""}`}
+                } ${
+                  collapsed
+                    ? "justify-center px-0"
+                    : ""
+                }`}
                 title={collapsed ? item.label : undefined}
               >
+                {/* Icon + Label */}
                 <div className="flex items-center gap-3 min-w-0">
                   <Icon
                     className={`w-5 h-5 shrink-0 ${
@@ -145,8 +196,10 @@ export default function Sidebar({
                   )}
                 </div>
 
+                {/* Badge + Arrow */}
                 {!collapsed && (
                   <div className="flex items-center gap-2">
+                    {/* Badge */}
                     {item.badge && (
                       <span
                         className={`text-[10px] px-2 py-0.5 rounded-full font-bold tracking-wide ${
@@ -158,6 +211,7 @@ export default function Sidebar({
                       </span>
                     )}
 
+                    {/* Submenu Arrow */}
                     {hasSubItems &&
                       (tasksExpanded ? (
                         <ChevronDown className="w-4 h-4" />
@@ -167,12 +221,15 @@ export default function Sidebar({
                   </div>
                 )}
 
+                {/* Active Indicator */}
                 {isActive && (
                   <div className="absolute left-0 top-2 bottom-2 w-1 bg-indigo-400 rounded-r-full" />
                 )}
               </button>
 
-              {/* Sub Items */}
+              {/* =================================================
+                  MY TASKS SUBMENU
+              ================================================= */}
 
               {hasSubItems &&
                 !collapsed &&
@@ -189,18 +246,20 @@ export default function Sidebar({
                         <button
                           type="button"
                           key={sub.id}
-                          onClick={() =>
+                          onClick={() => {
                             handleNavClick(
                               "tasks",
+                              "/tasks",
                               sub.filter
-                            )
-                          }
+                            );
+                          }}
                           className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all ${
                             isSubActive
                               ? "bg-indigo-500/15 text-indigo-300 border border-indigo-500/20"
                               : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/40"
                           }`}
                         >
+                          {/* Submenu Icon + Label */}
                           <div className="flex items-center gap-2 min-w-0">
                             <SubIcon
                               className={`w-3.5 h-3.5 ${
@@ -217,6 +276,7 @@ export default function Sidebar({
                             </span>
                           </div>
 
+                          {/* Count */}
                           <span
                             className={`text-[10px] px-1.5 py-0.5 rounded font-mono ${
                               sub.danger
@@ -236,14 +296,18 @@ export default function Sidebar({
         })}
       </div>
 
-      {/* Footer */}
+      {/* =========================================================
+          FOOTER - FOCUS STREAK
+      ========================================================= */}
 
       {!collapsed && (
         <div className="p-3 border-t border-slate-800/80">
           <div className="p-3 rounded-xl bg-gradient-to-br from-indigo-950/40 via-slate-900/60 to-slate-900 border border-indigo-500/20">
+            {/* Title */}
             <div className="flex items-center justify-between mb-1.5">
               <span className="text-xs font-semibold text-white flex items-center gap-1.5">
                 <Sparkles className="w-3.5 h-3.5 text-indigo-400" />
+
                 Focus Streak
               </span>
 
@@ -252,10 +316,12 @@ export default function Sidebar({
               </span>
             </div>
 
+            {/* Description */}
             <p className="text-[11px] text-slate-400 mb-2">
               8 consecutive productive days logged
             </p>
 
+            {/* Progress */}
             <div className="w-full h-1.5 bg-slate-800 rounded-full overflow-hidden">
               <div className="h-full bg-gradient-to-r from-indigo-500 to-cyan-400 w-3/4 rounded-full" />
             </div>
