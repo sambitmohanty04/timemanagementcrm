@@ -14,6 +14,12 @@ import Dashboard from "./pages/Dashboard";
 import MyTasks from "./pages/MyTasks";
 import Calendar from "./pages/Calendar";
 import TimeTracker from "./pages/TimeTracker";
+import FocusMode from "./pages/FocusMode";
+import Projects from "./pages/Projects";
+import ProjectDetails from "./pages/ProjectDetails";
+import Goals from "./pages/Goals";
+import Habits from "./pages/Habits";
+import Analytics from "./pages/Analytics";
 
 export default function App() {
   const [darkMode, setDarkMode] = useState(true);
@@ -98,10 +104,7 @@ export default function App() {
             setTasksExpanded={setTasksExpanded}
           />
 
-          {/* =========================================
-              MOBILE SIDEBAR
-          ========================================= */}
-
+          {/* ===MOBILE SIDEBAR==== */}
           <MobileSidebar
             open={mobileMenuOpen}
             setOpen={setMobileMenuOpen}
@@ -111,9 +114,7 @@ export default function App() {
             setActiveTaskFilter={setActiveTaskFilter}
           />
 
-          {/* =========================================
-              MAIN AREA
-          ========================================= */}
+          {/* ===MAIN AREA=== */}
 
           <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
 
@@ -149,9 +150,7 @@ export default function App() {
               }
             />
 
-            {/* =====================================
-                ROUTES
-            ===================================== */}
+            {/* ===ROUTES=== */}
 
             <main className="flex-1 overflow-y-auto p-4 lg:p-6 custom-scrollbar">
 
@@ -169,13 +168,11 @@ export default function App() {
                     />
                   }
                 />
-
                 {/* My Tasks */}
                 <Route
                   path="/tasks"
                   element={<MyTasks />}
                 />
-
                 {/* Calendar */}
                 <Route
                   path="/calendar"
@@ -185,6 +182,36 @@ export default function App() {
                 <Route
                   path="/time-tracker"
                   element={<TimeTracker />}
+                />
+                {/* Focus Mode */}
+                <Route
+                  path="/focus-mode"
+                  element={<FocusMode />}
+                />
+                {/* Projects */}
+                <Route
+                  path="/projects"
+                  element={<Projects />}
+                />
+                {/* Project Details */}
+                <Route
+                  path="/projects/:projectId"
+                  element={<ProjectDetails />}
+                />
+                {/* Goals */}
+                <Route
+                  path="/goals"
+                  element={<Goals />}
+                />
+                {/* Habits */}
+                <Route
+                  path="/habits"
+                  element={<Habits />}
+                />
+                {/* Analytics */}
+                <Route
+                  path="/analytics"
+                  element={<Analytics />}
                 />
 
               </Routes>
