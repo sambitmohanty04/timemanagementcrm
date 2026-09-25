@@ -14,7 +14,7 @@ import type {
   GoalCategory,
   GoalPeriod,
   GoalStatus,
-} from "../types/goal";
+} from "../types/goals";
 
 const Goals = () => {
   const [goals, setGoals] =

@@ -1,6 +1,7 @@
 import {
-  LayoutDashboard,CheckSquare, Calendar, Clock, Zap, FolderKanban,Target,BarChart3,Bot,Settings,
-  ListTodo,CalendarDays,CheckCircle2,AlertCircle,Flame,
+  LayoutDashboard, CheckSquare, Calendar, Clock, Zap, FolderKanban, Target, BarChart3, Bot, Settings,
+  ListTodo, CalendarDays, CheckCircle2, AlertCircle, Flame,
+  User, Bell, Shield, Settings2, Palette, LogOut
 } from "lucide-react";
 
 import type { NavItem } from "../types/navigation";
@@ -117,6 +118,45 @@ export const NAV_ITEMS: NavItem[] = [
     id: "settings",
     label: "Settings",
     icon: Settings,
-    path: "/settings",
+    //path: "/settings",
+    subItems: [
+      {
+        id: "settings-profile",
+        label: "Profile",
+        icon: User,
+        path: "/settings/profile",
+      },
+      {
+        id: "settings-notifications",
+        label: "Notifications",
+        icon: Bell,
+        path: "/settings/notifications",
+      },
+      {
+        id: "settings-security",
+        label: "Security",
+        icon: Shield,
+        path: "/settings/security",
+      },
+      {
+        id: "settings-account",
+        label: "Account",
+        icon: Settings2,
+        path: "/settings/account",
+      },
+      {
+        id: "settings-appearance",
+        label: "Appearance",
+        icon: Palette,
+        path: "/settings/appearance",
+      },
+      
+      {
+        id: "settings-logout",
+        label: "Logout",
+        icon: LogOut,
+        path: "/settings/logout",
+      },
+    ],
   },
 ];

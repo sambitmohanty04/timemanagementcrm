@@ -6,6 +6,8 @@ import {
   Routes,
 } from "react-router-dom";
 
+import ProtectedRoute from "./routes/ProtectedRoute";
+
 import Sidebar from "./components/layout/Sidebar";
 import MobileSidebar from "./components/layout/MobileSidebar";
 import Header from "./components/layout/Header";
@@ -20,6 +22,9 @@ import ProjectDetails from "./pages/ProjectDetails";
 import Goals from "./pages/Goals";
 import Habits from "./pages/Habits";
 import Analytics from "./pages/Analytics";
+import Settings from "./pages/Settings";
+
+import Login from "./pages/Login";
 
 export default function App() {
   const [darkMode, setDarkMode] = useState(true);
@@ -78,8 +83,14 @@ export default function App() {
     };
   }, []);
 
-  return (
-    <BrowserRouter>
+  /*
+   * ==========================================
+   * DASHBOARD LAYOUT
+   * ==========================================
+   */
+
+  const DashboardRoutes = () => {
+    return (
       <div
         className={`min-h-screen font-sans flex flex-col overflow-x-hidden ${
           darkMode
@@ -89,9 +100,7 @@ export default function App() {
       >
         <div className="relative z-10 flex flex-1 h-screen overflow-hidden">
 
-          {/* =========================================
-              DESKTOP SIDEBAR
-          ========================================= */}
+          {/* SIDEBAR */}
 
           <Sidebar
             collapsed={sidebarCollapsed}
@@ -104,7 +113,8 @@ export default function App() {
             setTasksExpanded={setTasksExpanded}
           />
 
-          {/* ===MOBILE SIDEBAR==== */}
+          {/* MOBILE SIDEBAR */}
+
           <MobileSidebar
             open={mobileMenuOpen}
             setOpen={setMobileMenuOpen}
@@ -114,11 +124,11 @@ export default function App() {
             setActiveTaskFilter={setActiveTaskFilter}
           />
 
-          {/* ===MAIN AREA=== */}
+          {/* MAIN AREA */}
 
           <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
 
-            {/* Header */}
+            {/* HEADER */}
 
             <Header
               activeTab={activeTab}
@@ -130,35 +140,27 @@ export default function App() {
               setMobileMenuOpen={setMobileMenuOpen}
               aiActive={aiActive}
               setAiActive={setAiActive}
-              profileDropdownOpen={
-                profileDropdownOpen
-              }
+              profileDropdownOpen={profileDropdownOpen}
               setProfileDropdownOpen={
                 setProfileDropdownOpen
               }
-              notificationsOpen={
-                notificationsOpen
-              }
+              notificationsOpen={notificationsOpen}
               setNotificationsOpen={
                 setNotificationsOpen
               }
-              quickCreateOpen={
-                quickCreateOpen
-              }
+              quickCreateOpen={quickCreateOpen}
               setQuickCreateOpen={
                 setQuickCreateOpen
               }
             />
 
-            {/* ===ROUTES=== */}
+            {/* PAGE CONTENT */}
 
             <main className="flex-1 overflow-y-auto p-4 lg:p-6 custom-scrollbar">
-
               <Routes>
 
-                {/* Dashboard */}
                 <Route
-                  path="/"
+                  path="/dashboard"
                   element={
                     <Dashboard
                       activeTab={activeTab}
@@ -168,58 +170,116 @@ export default function App() {
                     />
                   }
                 />
-                {/* My Tasks */}
+
                 <Route
                   path="/tasks"
                   element={<MyTasks />}
                 />
-                {/* Calendar */}
+
                 <Route
                   path="/calendar"
                   element={<Calendar />}
                 />
-                {/* Calendar */}
+
                 <Route
                   path="/time-tracker"
                   element={<TimeTracker />}
                 />
-                {/* Focus Mode */}
+
                 <Route
                   path="/focus-mode"
                   element={<FocusMode />}
                 />
-                {/* Projects */}
+
                 <Route
                   path="/projects"
                   element={<Projects />}
                 />
-                {/* Project Details */}
+
                 <Route
                   path="/projects/:projectId"
                   element={<ProjectDetails />}
                 />
-                {/* Goals */}
+
                 <Route
                   path="/goals"
                   element={<Goals />}
                 />
-                {/* Habits */}
+
                 <Route
                   path="/habits"
                   element={<Habits />}
                 />
-                {/* Analytics */}
+
                 <Route
                   path="/analytics"
                   element={<Analytics />}
                 />
 
-              </Routes>
+                <Route
+                  path="/settings"
+                  element={<Settings />}
+                />
 
+                {/* Unknown dashboard route */}
+                <Route
+                  path="*"
+                  element={
+                    <Navigate
+                      to="/dashboard"
+                      replace
+                    />
+                  }
+                />
+
+              </Routes>
             </main>
+
           </div>
         </div>
       </div>
+    );
+  };
+
+  return (
+    <BrowserRouter>
+      <Routes>
+
+        {/* =================================
+            PUBLIC LOGIN
+        ================================= */}
+
+        <Route
+          path="/login"
+          element={<Login />}
+        />
+
+        {/* Root → Login */}
+
+        <Route
+          path="/"
+          element={
+            <Navigate
+              to="/login"
+              replace
+            />
+          }
+        />
+
+        {/* =================================
+            PROTECTED APPLICATION
+        ================================= */}
+
+        <Route element={<ProtectedRoute />}>
+
+          <Route
+            path="/*"
+            element={<DashboardRoutes />}
+          />
+
+        </Route>
+
+      </Routes>
     </BrowserRouter>
   );
 }
