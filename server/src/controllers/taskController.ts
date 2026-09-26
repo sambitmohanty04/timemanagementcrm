@@ -2,43 +2,9 @@ import type { Response } from "express";
 import Task from "../models/Task.js";
 import type { AuthRequest } from "../middlewares/auth.js";
 
-// get tasks api
 export const getTasks = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
-    const { filter = "all", search } = req.query as { filter?: string; search?: string };
-
-    const query: Record<string, unknown> = { user: req.userId };
-
-    const startOfToday = new Date();
-    startOfToday.setHours(0, 0, 0, 0);
-    const endOfToday = new Date();
-    endOfToday.setHours(23, 59, 59, 999);
-
-    switch (filter) {
-      case "today":
-        query.completed = false;
-        query.dueDate = { $gte: startOfToday, $lte: endOfToday };
-        break;
-      case "upcoming":
-        query.completed = false;
-        query.dueDate = { $gt: endOfToday };
-        break;
-      case "completed":
-        query.completed = true;
-        break;
-      case "overdue":
-        query.completed = false;
-        query.dueDate = { $lt: startOfToday };
-        break;
-      // "all" → no extra filter
-    }
-
-    if (search) {
-      query.title = { $regex: search, $options: "i" };
-    }
-
-    const tasks = await Task.find(query).sort({ dueDate: 1, createdAt: -1 });
-
+    const tasks = await Task.find({ user: req.userId }).sort({ dueDate: 1, createdAt: -1 });
     res.status(200).json({ success: true, tasks });
   } catch (error) {
     console.error(error);
@@ -46,50 +12,9 @@ export const getTasks = async (req: AuthRequest, res: Response): Promise<void> =
   }
 };
 
-// get task counts api
-export const getTaskCounts = async (req: AuthRequest, res: Response): Promise<void> => {
-  try {
-    const userId = req.userId;
-
-    const startOfToday = new Date();
-    startOfToday.setHours(0, 0, 0, 0);
-    const endOfToday = new Date();
-    endOfToday.setHours(23, 59, 59, 999);
-
-    const [all, today, upcoming, completed, overdue] = await Promise.all([
-      Task.countDocuments({ user: userId }),
-      Task.countDocuments({
-        user: userId,
-        completed: false,
-        dueDate: { $gte: startOfToday, $lte: endOfToday },
-      }),
-      Task.countDocuments({
-        user: userId,
-        completed: false,
-        dueDate: { $gt: endOfToday },
-      }),
-      Task.countDocuments({ user: userId, completed: true }),
-      Task.countDocuments({
-        user: userId,
-        completed: false,
-        dueDate: { $lt: startOfToday },
-      }),
-    ]);
-
-    res.status(200).json({
-      success: true,
-      counts: { all, today, upcoming, completed, overdue },
-    });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ success: false, message: "Server error" });
-  }
-};
-
-// craete task api
 export const createTask = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
-    const { title, description, project, priority, dueDate } = req.body;
+    const { title, description, project, priority, dueDate, dueTime } = req.body;
 
     if (!title) {
       res.status(400).json({ success: false, message: "Title is required" });
@@ -97,11 +22,8 @@ export const createTask = async (req: AuthRequest, res: Response): Promise<void>
     }
 
     const task = await Task.create({
-      title,
-      description,
-      project,
-      priority,
-      dueDate,
+      title, description, project, priority, dueDate, dueTime,
+      status: "todo",
       user: req.userId,
     });
 
@@ -112,12 +34,13 @@ export const createTask = async (req: AuthRequest, res: Response): Promise<void>
   }
 };
 
-// update task api
 export const updateTask = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
+    const { title, description, project, priority, dueDate, dueTime, status } = req.body;
+
     const task = await Task.findOneAndUpdate(
       { _id: req.params.id, user: req.userId },
-      req.body,
+      { title, description, project, priority, dueDate, dueTime, status },
       { new: true, runValidators: true }
     );
 
@@ -133,19 +56,15 @@ export const updateTask = async (req: AuthRequest, res: Response): Promise<void>
   }
 };
 
-// task complete api toggle
 export const toggleTaskComplete = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const task = await Task.findOne({ _id: req.params.id, user: req.userId });
-
     if (!task) {
       res.status(404).json({ success: false, message: "Task not found" });
       return;
     }
-
-    task.completed = !task.completed;
+    task.status = task.status === "completed" ? "todo" : "completed";
     await task.save();
-
     res.status(200).json({ success: true, task });
   } catch (error) {
     console.error(error);
@@ -153,16 +72,29 @@ export const toggleTaskComplete = async (req: AuthRequest, res: Response): Promi
   }
 };
 
-// delete task api
-export const deleteTask = async (req: AuthRequest, res: Response): Promise<void> => {
+export const cancelTask = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
-    const task = await Task.findOneAndDelete({ _id: req.params.id, user: req.userId });
-
+    const task = await Task.findOne({ _id: req.params.id, user: req.userId });
     if (!task) {
       res.status(404).json({ success: false, message: "Task not found" });
       return;
     }
+    task.status = task.status === "cancelled" ? "todo" : "cancelled";
+    await task.save();
+    res.status(200).json({ success: true, task });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false, message: "Server error" });
+  }
+};
 
+export const deleteTask = async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const task = await Task.findOneAndDelete({ _id: req.params.id, user: req.userId });
+    if (!task) {
+      res.status(404).json({ success: false, message: "Task not found" });
+      return;
+    }
     res.status(200).json({ success: true, message: "Task deleted" });
   } catch (error) {
     console.error(error);

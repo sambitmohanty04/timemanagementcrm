@@ -4,10 +4,11 @@ import TaskItem from "./TaskItem";
 interface TaskListProps {
   tasks: Task[];
   onToggle: (id: string) => void;
+  onDelete: (id: string) => void;
+  onEdit: (task: Task) => void;
 }
 
-const TaskList = ({ tasks, onToggle }: TaskListProps) => {
-    
+const TaskList = ({ tasks, onToggle, onDelete, onEdit }: TaskListProps) => {
   if (tasks.length === 0) {
     return (
       <div className="flex min-h-[300px] items-center justify-center">
@@ -31,6 +32,8 @@ const TaskList = ({ tasks, onToggle }: TaskListProps) => {
           key={task.id}
           task={task}
           onToggle={onToggle}
+          onDelete={onDelete}
+          onEdit={onEdit}
         />
       ))}
     </div>

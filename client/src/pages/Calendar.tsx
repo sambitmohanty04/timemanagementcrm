@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   CalendarDays,
   CheckCircle2,
@@ -6,17 +6,28 @@ import {
   ChevronRight,
   Clock,
   Plus,
+  XCircle,
 } from "lucide-react";
 
 import type { CalendarTask } from "../types/calendar";
 import CalendarGrid from "../components/calendar/CalendarGrid";
+import { fetchTasks } from "../api/tasks";
 
 const formatDate = (date: Date): string => {
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, "0");
   const day = String(date.getDate()).padStart(2, "0");
-
   return `${year}-${month}-${day}`;
+};
+
+const formatTime = (dueDate: string): string => {
+  const date = new Date(dueDate);
+  if (isNaN(date.getTime())) return "";
+  return date.toLocaleTimeString("en-US", {
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
+  });
 };
 
 const Calendar = () => {
@@ -28,51 +39,28 @@ const Calendar = () => {
 
   const [selectedDate, setSelectedDate] = useState(today);
 
-  const [tasks] = useState<CalendarTask[]>(() => {
-    const todayDate = new Date();
+  const [tasks, setTasks] = useState<CalendarTask[]>([]);
+  const [loading, setLoading] = useState(true);
 
-    const tomorrow = new Date(todayDate);
-    tomorrow.setDate(tomorrow.getDate() + 1);
+  useEffect(() => {
+    fetchTasks()
+      .then((apiTasks) => {
+        const mapped: CalendarTask[] = apiTasks
+          .filter((t) => !!t.dueDate)
+          .map((t) => ({
+            id: t.id,
+            title: t.title,
+            dueDate: formatDate(new Date(t.dueDate!)),
+            dueTime: t.dueDate, // keep full ISO string for time formatting
+            priority: t.priority,
+            status: t.status,
+          }));
+        setTasks(mapped);
+      })
+      .finally(() => setLoading(false));
+  }, []);
 
-    const nextWeek = new Date(todayDate);
-    nextWeek.setDate(nextWeek.getDate() + 5);
-
-    return [
-      {
-        id: "1",
-        title: "Complete React dashboard",
-        dueDate: formatDate(todayDate),
-        priority: "high",
-        status: "todo",
-      },
-      {
-        id: "2",
-        title: "Team meeting",
-        dueDate: formatDate(todayDate),
-        priority: "medium",
-        status: "todo",
-      },
-      {
-        id: "3",
-        title: "Update documentation",
-        dueDate: formatDate(tomorrow),
-        priority: "low",
-        status: "completed",
-      },
-      {
-        id: "4",
-        title: "Client presentation",
-        dueDate: formatDate(nextWeek),
-        priority: "high",
-        status: "todo",
-      },
-    ];
-  });
-
-  const monthName = currentDate.toLocaleString("en-US", {
-    month: "long",
-  });
-
+  const monthName = currentDate.toLocaleString("en-US", { month: "long" });
   const year = currentDate.getFullYear();
 
   const selectedDateTasks = tasks.filter(
@@ -81,35 +69,49 @@ const Calendar = () => {
 
   const handlePreviousMonth = () => {
     setCurrentDate(
-      (current) =>
-        new Date(
-          current.getFullYear(),
-          current.getMonth() - 1,
-          1
-        )
+      (current) => new Date(current.getFullYear(), current.getMonth() - 1, 1)
     );
   };
 
   const handleNextMonth = () => {
     setCurrentDate(
-      (current) =>
-        new Date(
-          current.getFullYear(),
-          current.getMonth() + 1,
-          1
-        )
+      (current) => new Date(current.getFullYear(), current.getMonth() + 1, 1)
     );
   };
 
   const handleToday = () => {
     const now = new Date();
-
-    setCurrentDate(
-      new Date(now.getFullYear(), now.getMonth(), 1)
-    );
-
+    setCurrentDate(new Date(now.getFullYear(), now.getMonth(), 1));
     setSelectedDate(now);
   };
+
+  const statusIcon = (status: string) => {
+    if (status === "completed") return <CheckCircle2 size={18} />;
+    if (status === "cancelled") return <XCircle size={18} />;
+    return <Clock size={18} />;
+  };
+
+  const statusIconBg = (status: string) => {
+    if (status === "completed") return "bg-emerald-500/10 text-emerald-400";
+    if (status === "cancelled") return "bg-slate-500/10 text-slate-400";
+    return "bg-indigo-500/10 text-indigo-400";
+  };
+
+  const statusBadgeClass = (status: string) => {
+    if (status === "completed") return "bg-emerald-500/10 text-emerald-400";
+    if (status === "cancelled") return "bg-slate-500/10 text-slate-400";
+    return "bg-amber-500/10 text-amber-400";
+  };
+
+  const statusLabel = (status: string) => {
+    if (status === "completed") return "Completed";
+    if (status === "cancelled") return "Cancelled";
+    return "Pending";
+  };
+
+  if (loading) {
+    return <div className="min-h-screen bg-slate-950 p-6 text-slate-400">Loading calendar...</div>;
+  }
 
   return (
     <div className="min-h-screen bg-slate-950 p-4 text-white md:p-6">
@@ -117,20 +119,12 @@ const Calendar = () => {
       <div className="mb-6 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div className="flex items-center gap-3">
           <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-indigo-500/10">
-            <CalendarDays
-              size={24}
-              className="text-indigo-400"
-            />
+            <CalendarDays size={24} className="text-indigo-400" />
           </div>
 
           <div>
-            <h1 className="text-2xl font-bold">
-              Calendar
-            </h1>
-
-            <p className="text-sm text-slate-500">
-              Manage your schedule and tasks
-            </p>
+            <h1 className="text-2xl font-bold">Calendar</h1>
+            <p className="text-sm text-slate-500">Manage your schedule and tasks</p>
           </div>
         </div>
 
@@ -206,29 +200,18 @@ const Calendar = () => {
               {selectedDateTasks.length === 0
                 ? "No tasks scheduled"
                 : `${selectedDateTasks.length} task${
-                    selectedDateTasks.length > 1
-                      ? "s"
-                      : ""
+                    selectedDateTasks.length > 1 ? "s" : ""
                   } scheduled`}
             </p>
           </div>
 
-          <CalendarDays
-            size={22}
-            className="text-indigo-400"
-          />
+          <CalendarDays size={22} className="text-indigo-400" />
         </div>
 
         {selectedDateTasks.length === 0 ? (
           <div className="rounded-lg border border-dashed border-slate-800 py-10 text-center">
-            <CalendarDays
-              size={32}
-              className="mx-auto mb-3 text-slate-700"
-            />
-
-            <p className="text-sm text-slate-500">
-              No tasks for this date.
-            </p>
+            <CalendarDays size={32} className="mx-auto mb-3 text-slate-700" />
+            <p className="text-sm text-slate-500">No tasks for this date.</p>
           </div>
         ) : (
           <div className="space-y-3">
@@ -238,24 +221,14 @@ const Calendar = () => {
                 className="flex items-center justify-between rounded-lg border border-slate-800 bg-slate-950 p-4"
               >
                 <div className="flex items-center gap-3">
-                  <div
-                    className={`flex h-9 w-9 items-center justify-center rounded-lg ${
-                      task.status === "completed"
-                        ? "bg-emerald-500/10 text-emerald-400"
-                        : "bg-indigo-500/10 text-indigo-400"
-                    }`}
-                  >
-                    {task.status === "completed" ? (
-                      <CheckCircle2 size={18} />
-                    ) : (
-                      <Clock size={18} />
-                    )}
+                  <div className={`flex h-9 w-9 items-center justify-center rounded-lg ${statusIconBg(task.status)}`}>
+                    {statusIcon(task.status)}
                   </div>
 
                   <div>
                     <h3
                       className={`text-sm font-medium ${
-                        task.status === "completed"
+                        task.status === "completed" || task.status === "cancelled"
                           ? "text-slate-500 line-through"
                           : "text-white"
                       }`}
@@ -265,20 +238,17 @@ const Calendar = () => {
 
                     <p className="mt-1 text-xs capitalize text-slate-500">
                       {task.priority} priority
+                      {task.dueTime && (
+                        <span className="ml-2 normal-case text-slate-600">
+                          • {formatTime(task.dueTime)}
+                        </span>
+                      )}
                     </p>
                   </div>
                 </div>
 
-                <span
-                  className={`rounded-full px-2.5 py-1 text-xs font-medium ${
-                    task.status === "completed"
-                      ? "bg-emerald-500/10 text-emerald-400"
-                      : "bg-amber-500/10 text-amber-400"
-                  }`}
-                >
-                  {task.status === "completed"
-                    ? "Completed"
-                    : "Pending"}
+                <span className={`rounded-full px-2.5 py-1 text-xs font-medium ${statusBadgeClass(task.status)}`}>
+                  {statusLabel(task.status)}
                 </span>
               </div>
             ))}
