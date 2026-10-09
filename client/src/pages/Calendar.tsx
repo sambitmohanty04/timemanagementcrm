@@ -11,7 +11,7 @@ import {
 
 import type { CalendarTask } from "../types/calendar";
 import CalendarGrid from "../components/calendar/CalendarGrid";
-import { fetchTasks } from "../api/tasks";
+import { fetchTasks } from "../api/taskService";
 
 const formatDate = (date: Date): string => {
   const year = date.getFullYear();

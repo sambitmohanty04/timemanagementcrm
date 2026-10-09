@@ -1,4 +1,4 @@
-import { API_BASE_URL } from "../config/api";
+import { api } from "../config/api";
 
 interface ApiResponse<T = unknown> {
   success: boolean;
@@ -12,7 +12,7 @@ export async function apiPost<T = unknown>(
   endpoint: string,
   body: object
 ): Promise<ApiResponse<T>> {
-  const res = await fetch(`${API_BASE_URL}${endpoint}`, {
+  const res = await fetch(`${api}${endpoint}`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body),

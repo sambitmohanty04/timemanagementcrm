@@ -5,7 +5,7 @@ import type { Task, TaskFilter, TaskPriority } from "../types/task";
 import TaskTabs from "../components/tasks/TaskTabs";
 import TaskList from "../components/tasks/TaskList";
 import CreateTaskModal from "../components/tasks/CreateTaskModal";
-import { fetchTasks, createTaskApi, updateTaskApi, toggleTaskApi, cancelTaskApi, deleteTaskApi } from "../api/tasks";
+import { fetchTasks, createTaskApi, updateTaskApi, toggleTaskApi, cancelTaskApi, deleteTaskApi } from "../api/taskService";
 
 const MyTasks = () => {
   const [tasks, setTasks] = useState<Task[]>([]);

@@ -55,12 +55,9 @@ export const register = async (
   }
 };
 
-export const login = async (
-  req: Request,
-  res: Response
-): Promise<void> => {
+export const login = async (req: Request, res: Response): Promise<void> => {
   try {
-    const { email, password } = req.body;
+    const { email, password } = req.body ?? {};
 
     if (!email || !password) {
       res.status(400).json({
@@ -70,44 +67,28 @@ export const login = async (
       return;
     }
 
-    const user = await User.findOne({
-      email: email.toLowerCase(),
+    const user = await User.findOne({ email: String(email).toLowerCase().trim() });
+
+    // Same message for unknown email and wrong password
+    if (!user || !(await bcrypt.compare(password, user.password))) {
+      res.status(401).json({
+        success: false,
+        message: "Invalid email or password",
+      });
+      return;
+    }
+
+    const secret = process.env.JWT_SECRET;
+    if (!secret) {
+      throw new Error("JWT_SECRET is not defined");
+    }
+
+    const token = jwt.sign({ id: user._id }, secret, {
+      expiresIn: (process.env.JWT_EXPIRES_IN || "30d") as jwt.SignOptions["expiresIn"],
     });
-
-    if (!user) {
-      res.status(401).json({
-        success: false,
-        message: "Invalid email or password",
-      });
-      return;
-    }
-
-    const isPasswordValid = await bcrypt.compare(
-      password,
-      user.password
-    );
-
-    if (!isPasswordValid) {
-      res.status(401).json({
-        success: false,
-        message: "Invalid email or password",
-      });
-      return;
-    }
-
-    const token = jwt.sign(
-      {
-        userId: user._id.toString(),
-      },
-      process.env.JWT_SECRET as string,
-      {
-        expiresIn: "30d", // 30 days ≈ 1 month
-      }
-    );
 
     res.status(200).json({
       success: true,
-      message: "Login successful",
       token,
       user: {
         id: user._id,
@@ -116,11 +97,10 @@ export const login = async (
       },
     });
   } catch (error) {
-    console.error(error);
-
+    console.error("Login error:", error);
     res.status(500).json({
       success: false,
-      message: "Server error",
+      message: "Internal server error",
     });
   }
 };

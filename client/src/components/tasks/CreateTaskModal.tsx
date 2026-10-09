@@ -1,6 +1,7 @@
 import { X } from "lucide-react";
 import type { ChangeEvent, FormEvent } from "react";
 import type { TaskPriority } from "../../types/task";
+import GoalSelect from "../../components/goals/GoalSelect";
 
 interface NewTask {
   title: string;
@@ -9,6 +10,7 @@ interface NewTask {
   dueDate: string;
   dueTime: string;
   project: string;
+  goalId?: string; // new: linked goal
 }
 
 interface CreateTaskModalProps {
@@ -16,10 +18,11 @@ interface CreateTaskModalProps {
   task: NewTask;
   onClose: () => void;
   onChange: (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => void;
+  onGoalChange: (goalId: string | undefined) => void; // new
   onSubmit: (e: FormEvent<HTMLFormElement>) => void;
 }
 
-const CreateTaskModal = ({ open, task, onClose, onChange, onSubmit }: CreateTaskModalProps) => {
+const CreateTaskModal = ({ open, task, onClose, onChange, onGoalChange, onSubmit }: CreateTaskModalProps) => {
   if (!open) return null;
 
   return (
@@ -27,8 +30,8 @@ const CreateTaskModal = ({ open, task, onClose, onChange, onSubmit }: CreateTask
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
       onMouseDown={(e) => { if (e.target === e.currentTarget) onClose(); }}
     >
-      <div className="w-full max-w-lg rounded-xl border border-gray-200 bg-slate-800 shadow-xl dark:border-white/10 dark:bg-[#111827]">
-        <div className="flex items-center justify-between border-b border-gray-200 p-5 dark:border-white/10">
+      <div className="flex max-h-[90vh] w-full max-w-lg flex-col rounded-xl border border-gray-200 bg-slate-800 shadow-xl dark:border-white/10 dark:bg-[#111827]">
+        <div className="flex shrink-0 items-center justify-between border-b border-gray-200 p-5 dark:border-white/10">
           <div>
             <h2 className="text-lg font-semibold text-gray-300 dark:text-white">Create New Task</h2>
             <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">Add a new task to your task list</p>
@@ -38,7 +41,8 @@ const CreateTaskModal = ({ open, task, onClose, onChange, onSubmit }: CreateTask
           </button>
         </div>
 
-        <form onSubmit={onSubmit} className="space-y-5 p-5">
+        <form onSubmit={onSubmit} className="flex min-h-0 flex-1 flex-col">
+          <div className="min-h-0 flex-1 space-y-5 overflow-y-auto p-5 [scrollbar-width:thin]">
           <div>
             <label htmlFor="task-title" className="mb-2 block text-sm font-medium text-gray-300 dark:text-gray-500">Task Title</label>
             <input id="task-title" type="text" name="title" value={task.title} onChange={onChange}
@@ -53,6 +57,13 @@ const CreateTaskModal = ({ open, task, onClose, onChange, onSubmit }: CreateTask
               className="w-full resize-none rounded-lg border border-slate-600 bg-slate-600 px-3 py-2.5 text-sm text-gray-200 outline-none focus:border-blue-500 dark:border-white/10 dark:bg-white/5 dark:text-white" />
           </div>
 
+          <div>
+            <label htmlFor="task-project" className="mb-2 block text-sm font-medium text-gray-200 dark:text-gray-300">Project</label>
+            <input id="task-project" type="text" name="project" value={task.project} onChange={onChange}
+              placeholder="e.g. Website Redesign"
+              className="w-full rounded-lg border border-slate-600 bg-slate-600 px-3 py-2.5 text-sm text-gray-200 outline-none focus:border-blue-500 dark:border-white/10 dark:bg-white/5 dark:text-white" />
+          </div>
+
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div>
               <label htmlFor="task-priority" className="mb-2 block text-sm font-medium text-gray-200 dark:text-gray-300">Priority</label>
@@ -65,28 +76,32 @@ const CreateTaskModal = ({ open, task, onClose, onChange, onSubmit }: CreateTask
             </div>
 
             <div>
-              <label htmlFor="task-due-date" className="mb-2 block text-sm font-medium text-gray-200 dark:text-gray-300">Due Date</label>
-              <input id="task-due-date" type="date" name="dueDate" value={task.dueDate} onChange={onChange} required
-                className="w-full rounded-lg border border-slate-600 bg-slate-600 px-3 py-2.5 text-sm text-gray-200 outline-none focus:border-blue-500 dark:border-white/10 dark:bg-white/5 dark:text-white" />
+              <label htmlFor="task-goal" className="mb-2 block text-sm font-medium text-gray-200 dark:text-gray-300">Goal</label>
+              <GoalSelect
+                id="task-goal"
+                value={task.goalId}
+                onChange={onGoalChange}
+                className="w-full rounded-lg border border-slate-600 bg-slate-600 px-3 py-2.5 text-sm text-gray-200 outline-none focus:border-blue-500 dark:border-white/10 dark:bg-white/5 dark:text-white"
+              />
             </div>
           </div>
 
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div>
+              <label htmlFor="task-due-date" className="mb-2 block text-sm font-medium text-gray-200 dark:text-gray-300">Due Date</label>
+              <input id="task-due-date" type="date" name="dueDate" value={task.dueDate} onChange={onChange} required
+                className="w-full rounded-lg border border-slate-600 bg-slate-600 px-3 py-2.5 text-sm text-gray-200 outline-none focus:border-blue-500 dark:border-white/10 dark:bg-white/5 dark:text-white" />
+            </div>
+            <div>
               <label htmlFor="task-due-time" className="mb-2 block text-sm font-medium text-gray-200 dark:text-gray-300">Due Time</label>
               <input id="task-due-time" type="time" name="dueTime" value={task.dueTime} onChange={onChange}
                 className="w-full rounded-lg border border-slate-600 bg-slate-600 px-3 py-2.5 text-sm text-gray-200 outline-none focus:border-blue-500 dark:border-white/10 dark:bg-white/5 dark:text-white" />
             </div>
-
-            <div>
-              <label htmlFor="task-project" className="mb-2 block text-sm font-medium text-gray-200 dark:text-gray-300">Project</label>
-              <input id="task-project" type="text" name="project" value={task.project} onChange={onChange}
-                placeholder="e.g. Website Redesign"
-                className="w-full rounded-lg border border-slate-600 bg-slate-600 px-3 py-2.5 text-sm text-gray-200 outline-none focus:border-blue-500 dark:border-white/10 dark:bg-white/5 dark:text-white" />
-            </div>
           </div>
 
-          <div className="flex justify-end gap-3 border-t border-slate-600 pt-5 dark:border-white/10">
+          </div>
+
+          <div className="flex shrink-0 justify-end gap-3 border-t border-slate-600 p-5 dark:border-white/10">
             <button type="button" onClick={onClose} className="rounded-lg border border-gray-200 px-4 py-2.5 text-sm font-medium text-gray-200 transition hover:bg-gray-100 hover:text-gray-800 dark:border-white/10 dark:text-gray-300 dark:hover:bg-white/10">Cancel</button>
             <button type="submit" className="rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-blue-700">Create Task</button>
           </div>

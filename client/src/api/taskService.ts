@@ -1,0 +1,58 @@
+import { api } from '../config/api'
+import type { Task } from "../types/task";
+
+const authHeaders = () => ({
+  "Content-Type": "application/json",
+  Authorization: `Bearer ${localStorage.getItem("token")}`,
+});
+
+export const fetchTasks = async (): Promise<Task[]> => {
+  const res = await fetch(`${api}/tasks`, { headers: authHeaders() });
+  const data = await res.json();
+  return data.success ? data.tasks : [];
+};
+
+export const createTaskApi = async (
+  task: Omit<Task, "id" | "createdAt" | "status">
+): Promise<Task> => {
+  const res = await fetch(`${api}/tasks`, {
+    method: "POST",
+    headers: authHeaders(),
+    body: JSON.stringify(task),
+  });
+  const data = await res.json();
+  if (!data.success || !data.task) throw new Error(data.message || "Failed to create task");
+  return data.task;
+};
+
+export const updateTaskApi = async (
+  id: string,
+  updates: Partial<Omit<Task, "id" | "createdAt">>
+): Promise<Task> => {
+  const res = await fetch(`${api}/tasks/${id}`, {
+    method: "PUT",
+    headers: authHeaders(),
+    body: JSON.stringify(updates),
+  });
+  const data = await res.json();
+  if (!data.success || !data.task) throw new Error(data.message || "Failed to update task");
+  return data.task;
+};
+
+export const toggleTaskApi = async (id: string): Promise<Task> => {
+  const res = await fetch(`${api}/tasks/${id}/toggle`, { method: "PATCH", headers: authHeaders() });
+  const data = await res.json();
+  if (!data.success || !data.task) throw new Error(data.message || "Failed to toggle task");
+  return data.task;
+};
+
+export const cancelTaskApi = async (id: string): Promise<Task> => {
+  const res = await fetch(`${api}/tasks/${id}/cancel`, { method: "PATCH", headers: authHeaders() });
+  const data = await res.json();
+  if (!data.success || !data.task) throw new Error(data.message || "Failed to cancel task");
+  return data.task;
+};
+
+export const deleteTaskApi = async (id: string): Promise<void> => {
+  await fetch(`${api}/tasks/${id}`, { method: "DELETE", headers: authHeaders() });
+};

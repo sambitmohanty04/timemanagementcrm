@@ -1,4 +1,5 @@
 import { useState, type FormEvent } from "react";
+import axios from "axios";
 import {
     CheckCircle2,
     Eye,
@@ -8,7 +9,8 @@ import {
     Clock3,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { API_URL } from "../config/api";
+import { api } from "../config/api";
+import ErrorModal from "../components/modals/ErrorModal";
 
 const Login = () => {
     const navigate = useNavigate();
@@ -17,8 +19,7 @@ const Login = () => {
     const [password, setPassword] = useState("");
     const [showPassword, setShowPassword] = useState(false);
     const [loading, setLoading] = useState(false);
-
-    const [error, setError] = useState("")
+    const [error, setError] = useState("");
 
     const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault();
@@ -27,32 +28,44 @@ const Login = () => {
         try {
             setLoading(true);
 
-            const res = await fetch(`${API_URL}/auth/login`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ email, password }),
+            // `api` is an axios instance with baseURL already set
+            const { data } = await api.post("/auth/login", {
+                email,
+                password,
             });
 
-            const data = await res.json();
-
             if (!data.success) {
-                setError(data.message || "Login failed");
+                setError(data.message || "Invalid email or password.");
                 return;
             }
 
+            // Store authentication information
             localStorage.setItem("token", data.token);
+            localStorage.setItem("user", JSON.stringify(data.user));
 
-            localStorage.setItem(
-                "user",
-                JSON.stringify(data.user)
-            );
+            // Redirect to dashboard
+            navigate("/dashboard", { replace: true });
+        } catch (err) {
+            console.error("Login error:", err);
 
-            navigate("/dashboard", {
-                replace: true,
-            });
-        } catch (error) {
-            console.error(error);
-            setError("Something went wrong. Please try again.");
+            if (axios.isAxiosError(err)) {
+                if (err.response) {
+                    // Server replied with a 4xx / 5xx status
+                    setError(
+                        err.response.data?.message ||
+                            (err.response.status === 404
+                                ? "Login route not found (404)."
+                                : "Server error. Please try again later.")
+                    );
+                } else {
+                    // No response: server down, wrong port, or CORS
+                    setError(
+                        "Cannot reach the server. Check that the backend is running."
+                    );
+                }
+            } else {
+                setError("Something went wrong. Please try again.");
+            }
         } finally {
             setLoading(false);
         }
@@ -60,16 +73,20 @@ const Login = () => {
 
     return (
         <div className="min-h-screen bg-slate-900 flex items-center justify-center p-4">
+            {/* Error Modal */}
+            {error && (
+                <ErrorModal
+                    title="Login failed"
+                    message={error}
+                    onClose={() => setError("")}
+                />
+            )}
+
             <div className="w-full max-w-6xl overflow-hidden rounded-3xl bg-slate-700/10 shadow-2xl">
-
                 <div className="grid min-h-[450px] md:grid-cols-2">
-
                     {/* LEFT SIDE */}
                     <div className="relative hidden overflow-hidden bg-slate-800 p-10 text-white md:flex md:flex-col md:justify-between">
-
-                        {/* Background decoration */}
                         <div className="absolute -right-24 -top-24 h-72 w-72 rounded-full bg-slate-900 opacity-40" />
-
                         <div className="absolute -bottom-32 -left-20 h-80 w-80 rounded-full bg-slate-900 opacity-40" />
 
                         {/* Logo */}
@@ -79,10 +96,7 @@ const Login = () => {
                             </div>
 
                             <div>
-                                <h1 className="text-xl font-bold">
-                                    SB CRM
-                                </h1>
-
+                                <h1 className="text-xl font-bold">SB CRM</h1>
                                 <p className="text-sm text-indigo-200">
                                     Time & Workspace
                                 </p>
@@ -91,7 +105,6 @@ const Login = () => {
 
                         {/* Main content */}
                         <div className="relative z-10 max-w-md">
-
                             <p className="mb-3 text-sm font-medium uppercase tracking-wider text-indigo-200">
                                 Manage your time better
                             </p>
@@ -104,23 +117,18 @@ const Login = () => {
                             </h2>
 
                             <p className="mt-6 text-base leading-7 text-indigo-100">
-                                Organize your tasks, manage projects, track your
-                                productivity and achieve your goals from one
-                                powerful workspace.
+                                Organize your tasks, manage projects, track
+                                your productivity and achieve your goals from
+                                one powerful workspace.
                             </p>
 
-                            {/* Features */}
                             <div className="mt-8 space-y-2">
-
                                 <div className="flex items-center gap-3">
                                     <CheckCircle2
                                         size={20}
                                         className="text-indigo-200"
                                     />
-
-                                    <span>
-                                        Manage your daily tasks
-                                    </span>
+                                    <span>Manage your daily tasks</span>
                                 </div>
 
                                 <div className="flex items-center gap-3">
@@ -128,10 +136,7 @@ const Login = () => {
                                         size={20}
                                         className="text-indigo-200"
                                     />
-
-                                    <span>
-                                        Track your productivity
-                                    </span>
+                                    <span>Track your productivity</span>
                                 </div>
 
                                 <div className="flex items-center gap-3">
@@ -139,26 +144,19 @@ const Login = () => {
                                         size={20}
                                         className="text-indigo-200"
                                     />
-
-                                    <span>
-                                        Achieve your goals faster
-                                    </span>
+                                    <span>Achieve your goals faster</span>
                                 </div>
-
                             </div>
                         </div>
 
-                        {/* Bottom */}
                         <div className="relative z-10 text-sm text-indigo-200">
-                            © 2026 Chronos CRM. All rights reserved.
+                            © 2026 SB CRM. All rights reserved.
                         </div>
                     </div>
 
                     {/* RIGHT SIDE */}
                     <div className="flex items-center justify-center p-6 sm:p-10 lg:p-14">
-
                         <div className="w-full max-w-md">
-
                             {/* Mobile logo */}
                             <div className="mb-8 flex items-center gap-3 md:hidden">
                                 <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-600 text-white">
@@ -166,7 +164,7 @@ const Login = () => {
                                 </div>
 
                                 <div>
-                                    <h1 className="font-bold text-slate-900">
+                                    <h1 className="font-bold text-slate-200">
                                         SB CRM
                                     </h1>
 
@@ -192,21 +190,23 @@ const Login = () => {
                                 onSubmit={handleSubmit}
                                 className="space-y-5"
                             >
-
                                 {/* Email */}
                                 <div>
-                                    <label className="mb-2 block text-sm font-medium text-slate-500">
+                                    <label
+                                        htmlFor="email"
+                                        className="mb-2 block text-sm font-medium text-slate-500"
+                                    >
                                         Email address
                                     </label>
 
                                     <div className="relative">
-
                                         <Mail
                                             size={19}
                                             className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500"
                                         />
 
                                         <input
+                                            id="email"
                                             type="email"
                                             value={email}
                                             onChange={(e) =>
@@ -216,35 +216,38 @@ const Login = () => {
                                             className="h-12 w-full rounded-xl border border-slate-200 bg-slate-50 pl-11 pr-4 text-sm text-slate-900 outline-none transition focus:border-indigo-500 focus:bg-white focus:ring-4 focus:ring-indigo-500/10"
                                             required
                                         />
-
                                     </div>
                                 </div>
 
                                 {/* Password */}
                                 <div>
                                     <div className="mb-2 flex items-center justify-between">
-
-                                        <label className="text-sm font-medium text-slate-500">
+                                        <label
+                                            htmlFor="password"
+                                            className="text-sm font-medium text-slate-500"
+                                        >
                                             Password
                                         </label>
 
                                         <button
                                             type="button"
                                             className="text-sm font-medium text-indigo-600 hover:text-indigo-700"
+                                            onClick={() => {
+                                                // Add forgot password logic here
+                                            }}
                                         >
                                             Forgot password?
                                         </button>
-
                                     </div>
 
                                     <div className="relative">
-
                                         <Lock
                                             size={19}
                                             className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500"
                                         />
 
                                         <input
+                                            id="password"
                                             type={
                                                 showPassword
                                                     ? "text"
@@ -255,7 +258,7 @@ const Login = () => {
                                                 setPassword(e.target.value)
                                             }
                                             placeholder="Enter your password"
-                                            className="h-12 w-full rounded-xl border border-slate-200 bg-slate-50 pl-11 pr-12 text-sm text-slate-500 outline-none transition focus:border-indigo-500 focus:bg-white focus:ring-4 focus:ring-indigo-500/10"
+                                            className="h-12 w-full rounded-xl border border-slate-200 bg-slate-50 pl-11 pr-12 text-sm text-slate-900 outline-none transition focus:border-indigo-500 focus:bg-white focus:ring-4 focus:ring-indigo-500/10"
                                             required
                                         />
 
@@ -266,6 +269,11 @@ const Login = () => {
                                                     (previous) => !previous
                                                 )
                                             }
+                                            aria-label={
+                                                showPassword
+                                                    ? "Hide password"
+                                                    : "Show password"
+                                            }
                                             className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
                                         >
                                             {showPassword ? (
@@ -274,13 +282,11 @@ const Login = () => {
                                                 <Eye size={19} />
                                             )}
                                         </button>
-
                                     </div>
                                 </div>
 
                                 {/* Remember me */}
                                 <div className="flex items-center gap-2">
-
                                     <input
                                         id="remember"
                                         type="checkbox"
@@ -293,7 +299,6 @@ const Login = () => {
                                     >
                                         Remember me
                                     </label>
-
                                 </div>
 
                                 {/* Submit */}
@@ -302,35 +307,25 @@ const Login = () => {
                                     disabled={loading}
                                     className="h-12 w-full rounded-xl bg-indigo-600 text-sm font-semibold text-white shadow-lg shadow-indigo-600/20 transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-60"
                                 >
-                                    {loading
-                                        ? "Signing in..."
-                                        : "Sign In"}
+                                    {loading ? "Signing in..." : "Sign In"}
                                 </button>
-
                             </form>
 
                             {/* Register */}
                             <div className="mt-8 text-center">
-
                                 <p className="text-sm text-slate-500">
                                     Don't have an account?{" "}
-
                                     <button
                                         type="button"
-                                        onClick={() =>
-                                            navigate("/register")
-                                        }
+                                        onClick={() => navigate("/register")}
                                         className="font-semibold text-indigo-600 hover:text-indigo-700"
                                     >
                                         Create account
                                     </button>
                                 </p>
-
                             </div>
-
                         </div>
                     </div>
-
                 </div>
             </div>
         </div>

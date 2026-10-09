@@ -1,13 +1,6 @@
-export type GoalStatus =
-  | "active"
-  | "completed"
-  | "overdue"
-  | "on-hold";
+export type GoalStatus = "active" | "completed" | "overdue" | "on-hold";
 
-export type GoalPriority =
-  | "low"
-  | "medium"
-  | "high";
+export type GoalPriority = "low" | "medium" | "high";
 
 export type GoalCategory =
   | "productivity"
@@ -17,12 +10,7 @@ export type GoalCategory =
   | "learning"
   | "financial";
 
-export type GoalPeriod =
-  | "daily"
-  | "weekly"
-  | "monthly"
-  | "quarterly"
-  | "yearly";
+export type GoalPeriod = "daily" | "weekly" | "monthly" | "quarterly" | "yearly";
 
 export interface GoalMilestone {
   id: string;
@@ -53,4 +41,34 @@ export interface Goal {
   milestones: GoalMilestone[];
 
   createdAt: string;
+}
+
+/* ---------- API types ---------- */
+
+export interface GoalStats {
+  total: number;
+  active: number;
+  completed: number;
+  overdue: number;
+  onHold: number;
+  completionRate: number;
+}
+
+export type CreateGoalData = Omit<
+  Goal,
+  "id" | "createdAt" | "projectName" | "milestones" | "status" | "currentValue"
+> & {
+  status?: GoalStatus;
+  currentValue?: number;
+  milestones?: Pick<GoalMilestone, "title">[];
+};
+
+export type UpdateGoalData = Partial<CreateGoalData>;
+
+export interface GoalFilters {
+  status?: GoalStatus;
+  priority?: GoalPriority;
+  category?: GoalCategory;
+  period?: GoalPeriod;
+  projectId?: string;
 }
